@@ -159,7 +159,7 @@ export class GeminiLiveClient extends EventEmitter {
       };
 
       this.ws.send(JSON.stringify(message));
-      console.log("📨 Sent PCM audio chunk to Gemini.");
+      //console.log("📨 Sent PCM audio chunk to Gemini.");
       await new Promise((resolve) => setTimeout(resolve, 50)); // 1s delay
     }
     this.isSendingAudio = false;
