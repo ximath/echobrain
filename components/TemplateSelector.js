@@ -35,50 +35,58 @@ const prompt_end = `
     - **Economic Impact**: [Key insights]
     - **Military Situation**: [Key insights]
     - **International Reactions**: [Key insights]    
-
-
 `;
-
 
 const templates = {
   interview: {
     label: "Interview Prep (STAR)",
-    prompt:`
+    defaultContext: "Tell me about a time you faced an uncertainty and resolved it using data-driven decision making?",
+
+    getPrompt: (context) => `
         You are my **diligent and proactive assistant**. 
 
         I am preparing for a behavioral product manager interview and your goal is to listen to my inputs and structure them in STAR format. 
         Make sure to appropriately structure notes - situation in situation, task in task, action in action, etc. 
         User tends to move back and forth between them when talking, although you should guide the user linearly, don't expect them to be perfectly following the structure, you should do the structuring.
+        
+        
+        At the **beginning of the conversation**, always ask a question.        
+        Extract question from this context and ask it: ${context} 
 
-        At the **beginning of the conversation**, always ask:  
-        👉 **_"Tell me about a time you faced an uncertainty and resolved it using data-driven decision making?"_**  
+
         (No need to mention note-taking—just do it in the background.)
-        Then from then on you need to structure notes.
+        
         ${prompt_end}
     `,
   },
   learning: {
     label: "Learning a Topic",
-    prompt: `
+    defaultContext: "Large Language Models",
+    getPrompt: (context) => `
       You are my **diligent and proactive assistant**. 
 
       I am trying to learn more about a topic. 
 
-      At the **beginning of the conversation**, always ask: **_"Tell me about what you're trying to learn."_**  
+      ${context ? `**Topic of Interest:** ${context}` : ""}
+      
       (No need to mention note-taking—just do it in the background.)
 
       ${prompt_end}
-      
     `,
   },
   onePager: {
     label: "One-Pager Writing",
-    prompt: `
+    defaultContext: "I am writing a one-pager document about a technical decision.",
+    getPrompt: (context) => `
       You are my **diligent and proactive assistant**. 
 
       I am writing a **one-pager document**. Help me structure it properly.
-      
+
+      ${context ? `**Additional Context:** ${context}` : ""}
+
       Ensure logical flow of Background → Problem → Solution Alternatives → Evaluation Criteria → Next Steps.
+
+      
       ${prompt_end}
     `,
   },
@@ -86,18 +94,25 @@ const templates = {
 
 export default function TemplateSelector({ onSelect }) {
   const [selected, setSelected] = useState("learning");
+  const [context, setContext] = useState("");
 
   useEffect(() => {
+    setContext(templates[selected].defaultContext);
     // Call onSelect with the default template's prompt when component mounts
-    onSelect(templates[selected].prompt);
-  }, []); // Empty dependency array ensures it runs only once on mount
+    onSelect(templates[selected].getPrompt(context));
 
-
+  }, [selected, context]); // Update when selection or context changes
 
   const handleChange = (event) => {
     const selectedKey = event.target.value;
     setSelected(selectedKey);
-    onSelect(templates[selectedKey].prompt);
+    setContext(templates[selectedKey].defaultContext);
+    onSelect(templates[selectedKey].getPrompt(context));
+  };
+
+  const handleContextChange = (event) => {
+    setContext(event.target.value);
+    onSelect(templates[selected].getPrompt(event.target.value));
   };
 
   return (
@@ -114,6 +129,17 @@ export default function TemplateSelector({ onSelect }) {
           </option>
         ))}
       </select>
+
+      <label className="block text-lg font-semibold mt-4 mb-2">
+        Optional Context:
+      </label>
+      <textarea
+        
+        value={context}
+        onChange={handleContextChange}
+        placeholder="Provide additional context"
+        className="p-2 rounded-md bg-gray-800 text-white w-full"
+      />
     </div>
   );
 }
