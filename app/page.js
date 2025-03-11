@@ -89,6 +89,11 @@ export default function Home() {
       console.log("🎧 Received AI audio response, playing...");
       micRecorder.playAudio(audioBuffer);
     };
+    
+    const handleInterrupt = () => {
+      console.log("Handle Interrupt called")
+      micRecorder.stopPlayback();
+    };
 
     micRecorder.on("dataavailable", (chunk) => {
       geminiClient.sendAudioChunk(chunk);
@@ -96,13 +101,13 @@ export default function Home() {
 
     geminiClient.on("audio", handleAudioResponse);
     geminiClient.on("toolcall", handleTools);
-
+    geminiClient.on("interrupted", handleInterrupt);
     return () => {};
   }, []);
 
   return (
     <div className="p-6 bg-gray-900 text-white min-h-screen">
-      <h1 className="text-2xl font-bold mb-4">Brainstorming Assistant</h1>
+      <h1 className="text-2xl font-bold mb-4">EchoBrain</h1>
 
       {/* ✅ Template Selector */}
       <TemplateSelector onSelect={setPrompt} />
@@ -110,7 +115,7 @@ export default function Home() {
       <button
         onClick={isRecording ? stopRecording : startRecording}
         className={`px-4 py-2 rounded-md ${
-          isRecording ? "bg-red-600" : "bg-green-600"
+          isRecording ? "bg-red-600" : "bg-indigo-600"
         }`}
       >
         {isRecording ? "Stop" : "Start"}

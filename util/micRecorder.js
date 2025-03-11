@@ -89,12 +89,6 @@ class MicRecorder extends EventEmitter {
         }
     }
 
-   interruptIfPlaying() {
-        // if (this.isPlaying) {
-        //     console.log("⏹️ Interrupting playback...");
-        //     this.stopPlayback();
-        // }
-    }
 
     scheduleNextBuffer() {
         const SCHEDULE_AHEAD_TIME = 0.1; // 200ms buffer to avoid gaps
@@ -136,9 +130,9 @@ class MicRecorder extends EventEmitter {
         this.isPlaying = false;
         this.audioQueue = [];
         this.scheduledTime = this.audioContext.currentTime;
-        if (this.audioContext) {
-            this.audioContext.close();
-        }
+        // if (this.audioContext) {
+        //     this.audioContext.close();
+        // }
     }
 
     stopRecording() {
