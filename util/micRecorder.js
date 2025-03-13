@@ -1,5 +1,5 @@
 import { EventEmitter } from "eventemitter3";
-
+import {convertToLittleEndian, convertPCMToFloat32} from "@/util/converters";
 
 class MicRecorder extends EventEmitter {
     constructor(sampleRate = 24000) {
@@ -19,7 +19,7 @@ class MicRecorder extends EventEmitter {
             console.log("🔹 Requesting microphone access...");
             this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-            console.log("✅ Microphone access granted!");
+            console.log("Microphone access granted!");
 
             // Create audio context with the target sample rate
             this.audioContext = new AudioContext({ sampleRate: this.sampleRate });
@@ -38,14 +38,13 @@ class MicRecorder extends EventEmitter {
                 const { int16arrayBuffer } = event.data.data;
                 
                 if (int16arrayBuffer) {
-                    // 🔹 Convert Float32 to Int16 before sending
+                    // Convert Float32 to Int16 before sending
                     const int16PCM = new Int16Array(int16arrayBuffer);
                     
-                    // 🔹 Ensure it's Little Endian
+                    // Ensure it's Little Endian
                     const littleEndianBuffer = convertToLittleEndian(int16PCM);
                     
                     this.emit("dataavailable", littleEndianBuffer);
-                    //this.onDataAvailable(littleEndianBuffer);
                 }
             };
 
@@ -91,7 +90,7 @@ class MicRecorder extends EventEmitter {
 
 
     scheduleNextBuffer() {
-        const SCHEDULE_AHEAD_TIME = 0.1; // 200ms buffer to avoid gaps
+        const SCHEDULE_AHEAD_TIME = 0.1; // buffer to avoid gaps
 
         while (
             this.audioQueue.length > 0 &&
@@ -115,7 +114,7 @@ class MicRecorder extends EventEmitter {
             if (this.audioQueue.length === 0) {
                 source.onended = () => {
                     this.isPlaying = false;
-                    console.log("✅ Audio playback complete.");
+                    console.log("Audio playback complete.");
                 };
             }
         }
@@ -163,27 +162,6 @@ class MicRecorder extends EventEmitter {
     }
 }
 
-function convertToLittleEndian(int16Array) {
-    const buffer = new ArrayBuffer(int16Array.length * 2);
-    const view = new DataView(buffer);
-
-    for (let i = 0; i < int16Array.length; i++) {
-        view.setInt16(i * 2, int16Array[i], true); // 🔹 true = Little Endian
-    }
-
-    return buffer;
-}
-
-function convertPCMToFloat32(pcmBuffer) {
-    const dataView = new DataView(pcmBuffer);
-    const float32Array = new Float32Array(pcmBuffer.byteLength / 2);
-
-    for (let i = 0; i < float32Array.length; i++) {
-        float32Array[i] = dataView.getInt16(i * 2, true) / 32768.0; // Little-endian
-    }
-
-    return float32Array;
-}
 
 
 export default MicRecorder;

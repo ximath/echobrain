@@ -1,12 +1,12 @@
 'use client';
-
 import { useState, useEffect } from "react";
-import geminiClient from "../util/geminiLive"; 
-import MicRecorder from "../util/micRecorder"; 
+import GeminiLiveClient from "@/util/geminiLive"; 
+import MicRecorder from "@/util/micRecorder"; 
 import ReactMarkdown from "react-markdown";
-import TemplateSelector from "../components/TemplateSelector"; 
+import TemplateSelector from "@/components/TemplateSelector"; 
 
 const micRecorder = new MicRecorder(); 
+const geminiClient = new GeminiLiveClient();
 
 const setNotesSchema = {
   name: "set_notes",
@@ -23,16 +23,15 @@ const setNotesSchema = {
   },
 };
 
-export default function Home() {
+export default function Home() 
+{
   const [isRecording, setIsRecording] = useState(false);
   const [notes, setNotes] = useState("");
   const [prompt, setPrompt] = useState("");
-
-  /**
-   * Start recording and stream to Gemini
-   */
-  const startRecording = async () => {
-    console.log("🎤 Start button clicked, initializing Gemini connection...");
+ 
+  const startRecording = async () => 
+  {
+    console.log("Start button clicked, initializing Gemini connection...");
 
     try {
       const geminiConfig = {
@@ -49,28 +48,28 @@ export default function Home() {
         tools: [{ functionDeclarations: [setNotesSchema] }],
       };
 
-      await geminiClient.connect(geminiConfig); // ✅ Ensure WebSocket is connected
-      console.log("✅ Connected to Gemini, starting recording...");
+      await geminiClient.connect(geminiConfig); // Ensure WebSocket is connected
+      console.log("Connected to Gemini, starting recording...");
 
-      await micRecorder.startRecording(); // ✅ Start Mic Recording
+      await micRecorder.startRecording(); // Start Mic Recording
 
       setIsRecording(true);
     } catch (error) {
-      console.error("❌ Error starting recording:", error);
+      console.error(" Error starting recording:", error);
     }
   };
 
-  /**
-   * Stop recording
-   */
-  const stopRecording = async () => {
-    console.log("⏹️ Stop button clicked...");
-    await micRecorder.stopRecording(); // ✅ Stop Mic Recording
-    geminiClient.disconnect(); // ✅ Stop WebSocket
+
+  const stopRecording = async () => 
+  {
+    console.log("Stop button clicked...");
+    await micRecorder.stopRecording(); // Stop Mic Recording
+    geminiClient.disconnect(); // Stop WebSocket
     setIsRecording(false);
   };
 
-  const handleTools = (toolCall) => {
+  const handleTools = (toolCall) => 
+  {
     console.log("Tool call");
     
     const fc = toolCall.functionCalls.find((fc) => fc.name === "set_notes");
@@ -81,20 +80,18 @@ export default function Home() {
     }
   };
 
-  /**
-   * Listen for Gemini responses (Live Notes)
-   */
-  useEffect(() => {
-    const handleAudioResponse = (audioBuffer) => {
-      console.log("🎧 Received AI audio response, playing...");
-      micRecorder.playAudio(audioBuffer);
-    };
-    
-    const handleInterrupt = () => {
-      console.log("Handle Interrupt called")
-      micRecorder.stopPlayback();
-    };
+  const handleAudioResponse = (audioBuffer) => {
+    console.log("Received AI audio response, playing...");
+    micRecorder.playAudio(audioBuffer);
+  };
+ 
+  const handleInterrupt = () => {
+    console.log("Handle Interrupt called")
+    micRecorder.stopPlayback();
+  };
 
+  useEffect(() => 
+  {
     micRecorder.on("dataavailable", (chunk) => {
       geminiClient.sendAudioChunk(chunk);
     });
@@ -108,8 +105,7 @@ export default function Home() {
   return (
     <div className="p-6 bg-gray-900 text-white min-h-screen">
       <h1 className="text-2xl font-bold mb-4">EchoBrain</h1>
-
-      {/* ✅ Template Selector */}
+      
       <TemplateSelector onSelect={setPrompt} />
 
       <button

@@ -4,6 +4,8 @@ const GEMINI_LIVE_URL =
   "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent";
 const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY; 
 
+import {base64ToArrayBuffer, arrayBufferToBase64} from "@/util/converters";
+
 
 export class GeminiLiveClient extends EventEmitter {
   constructor() {
@@ -11,20 +13,10 @@ export class GeminiLiveClient extends EventEmitter {
     this.ws = null;
     this.isStreaming = false;
     this.audioQueue = [];
-    this.isSendingAudio = false; // Flag to manage the delay
-    this.config = null;
+    this.isSendingAudio = false; // Flag to manage the delay    
     this.accumulatedBuffer = new Uint8Array(0); // Buffer accumulator
     this.chunkSize = 4096; // Increase chunk size
-    this.config = null;
-
   }
-
-  log(type, message) {
-    const log = { date: new Date(), type, message };
-    this.emit("log", log);
-  }
-
-
 
   sendText(text) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
@@ -45,8 +37,6 @@ export class GeminiLiveClient extends EventEmitter {
 
   async connect(config) {
 
-    this.config = config;
-
     return new Promise((resolve, reject) => {
       if (this.isStreaming) {
         console.warn("⚠️ Already connected to Gemini WebSocket.");
@@ -54,19 +44,19 @@ export class GeminiLiveClient extends EventEmitter {
       }
 
       if (!API_KEY) {
-        console.error("❌ Missing API key! Check .env file.");
+        console.error("Missing API key! Check .env file.");
         return reject("Missing API key");
       }
 
       const url = `${GEMINI_LIVE_URL}?key=${API_KEY}`;
-      console.log(`🌐 Connecting to Gemini WebSocket: ${url}`);
+      console.log(`Connecting to Gemini WebSocket: ${url}`);
 
       this.ws = new WebSocket(url);
 
       this.ws.onopen = () => {
-        console.log("✅ WebSocket connected!");
+        console.log("WebSocket connected!");
        
-        const setupMessage = { setup: this.config };
+        const setupMessage = { setup: config };
 
         this.ws.send(JSON.stringify(setupMessage));
         console.log("📨 Sent setup message to Gemini:", setupMessage);
@@ -76,7 +66,7 @@ export class GeminiLiveClient extends EventEmitter {
       };
 
       this.ws.onerror = (error) => {
-        console.error("❌ WebSocket Error:", error);
+        console.error("WebSocket Error:", error);
         reject(error);
       };
 
@@ -151,7 +141,7 @@ export class GeminiLiveClient extends EventEmitter {
         realtimeInput: {
           mediaChunks: [
             {
-              mimeType: "audio/pcm;rate=16000", // ✅ Gemini expects PCM; format
+              mimeType: "audio/pcm;rate=16000", //  Gemini expects PCM; format
               data: base64Output,
             },
           ],
@@ -190,7 +180,7 @@ export class GeminiLiveClient extends EventEmitter {
         }
 
         if (isTurnComplete(serverContent)) {
-          console.log("✅ Turn complete.");
+          console.log("Turn complete.");
           this.emit("turncomplete");
         }
 
@@ -209,59 +199,30 @@ export class GeminiLiveClient extends EventEmitter {
             }
           });
 
-          const textResponse = parts
-            .filter((p) => p.text)
-            .map((p) => p.text)
-            .join(" ");
-
-          if (textResponse) {
-            console.log("📝 AI Notes:", textResponse);
-            this.emit("content", textResponse);
-          }
+       
         }
       }
     } catch (err) {
-      console.error("❌ Error handling message:", err);
+      console.error("Error handling message:", err);
     }
   }
 }
 
-function base64ToArrayBuffer(base64) {
-    var binaryString = atob(base64);
-    var bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes.buffer;
-}
 
-/**
- * Convert ArrayBuffer to Base64
- */
-function arrayBufferToBase64(buffer) {
-    var binary = "";
-    var bytes = new Uint8Array(buffer);
-    var len = bytes.byteLength;
-    for (var i = 0; i < len; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return window.btoa(binary);
-  }
-
-export const blobToJSON = (blob) =>
-    new Promise((resolve, reject) => {
+function blobToJSON(blob) {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
         if (reader.result) {
           const json = JSON.parse(reader.result);
           resolve(json);
         } else {
-          reject("❌ Failed to parse JSON");
+          reject("Failed to parse JSON");
         }
       };
       reader.readAsText(blob);
-    });
-
+    })
+}
     
 
 function isSetupCompleteMessage(response) {
@@ -289,6 +250,4 @@ function isModelTurn(serverContent) {
   return serverContent.modelTurn && serverContent.modelTurn.parts;
 }
 
-// ✅ Create a single instance for use in the app
-const geminiClient = new GeminiLiveClient();
-export default geminiClient;
+export default GeminiLiveClient;

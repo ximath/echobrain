@@ -66,6 +66,7 @@ const templates = {
       You are my **diligent and proactive assistant**. 
 
       I am trying to learn more about a topic. 
+      Make sure to appropriately structure notes hierarchically to ease my learning.
 
       ${context ? `**Topic of Interest:** ${context}` : ""}
       
@@ -84,7 +85,7 @@ const templates = {
 
       ${context ? `**Additional Context:** ${context}` : ""}
 
-      Ensure logical flow of Background → Problem → Solution Alternatives → Evaluation Criteria → Next Steps.
+      Ensure logical flow of Background → Problem → Solution Alternatives → Evaluation Criteria → Decision
 
       
       ${prompt_end}
@@ -101,7 +102,7 @@ export default function TemplateSelector({ onSelect }) {
     // Call onSelect with the default template's prompt when component mounts
     onSelect(templates[selected].getPrompt(context));
 
-  }, [selected, context]); // Update when selection or context changes
+  }, [selected]); // Update when selection or context changes
 
   const handleChange = (event) => {
     const selectedKey = event.target.value;
@@ -118,15 +119,11 @@ export default function TemplateSelector({ onSelect }) {
   return (
     <div className="mb-4">
       <label className="block text-lg font-semibold mb-2">Select a Template:</label>
-      <select
-        value={selected}
-        onChange={handleChange}
-        className="p-2 rounded-md bg-gray-800 text-white"
-      >
+      <select value={selected} onChange={handleChange} className="p-2 rounded-md bg-gray-800 text-white">
         {Object.keys(templates).map((key) => (
-          <option key={key} value={key}>
+        <option key={key} value={key}>
             {templates[key].label}
-          </option>
+        </option>
         ))}
       </select>
 
